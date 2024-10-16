@@ -1,0 +1,185 @@
+# Ejercicios Transversales
+
+Librerias necesarias
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+```
+
+## 3.2.1
+
+### **Lectura de datos meteorológicos**
+
+Descarga de archivos
+
+```{r}
+download.file("https://raw.githubusercontent.com/rse-r/intro-programacion/main/datos/metadatos_completos.csv",
+              "datos/Metadatos.csv")
+download.file("https://raw.githubusercontent.com/rse-r/intro-programacion/main/datos/NH0472.csv",
+              "datos/Estacion-NH0472.csv")
+download.file("https://raw.githubusercontent.com/rse-r/intro-programacion/main/datos/NH0910.csv",
+              "datos/Estacion-NH0910.csv")
+download.file("https://raw.githubusercontent.com/rse-r/intro-programacion/main/datos/NH0046.csv",
+              "datos/Estacion-NH0046.csv")
+download.file("https://raw.githubusercontent.com/rse-r/intro-programacion/main/datos/NH0098.csv",
+              "datos/Estacion-NH0098.csv")
+download.file("https://raw.githubusercontent.com/rse-r/intro-programacion/main/datos/NH0437.csv",
+              "datos/Estacion-NH0437.csv")
+```
+
+Leer los datos
+
+```{r}
+metadatos <- read_csv("datos/Metadatos.csv")
+nh0472 <- read_csv("datos/Estacion-NH0472.csv")
+nh0910 <- read_csv("datos/Estacion-NH0910.csv")
+nh0046 <- read_csv("datos/Estacion-NH0046.csv")
+nh0098 <- read_csv("datos/Estacion-NH0098.csv")
+nh0437 <- read_csv("datos/Estacion-NH0437.csv")
+```
+
+Explorar la estructura de los dataframes
+
+```{r}
+str(metadatos)
+```
+
+```{r}
+str(nh0472)
+```
+
+```{r}
+str(nh0910)
+```
+
+```{r}
+str(nh0046)
+```
+
+```{r}
+str(nh0098)
+```
+
+```{r}
+str(nh0437)
+```
+
+## 4.4.1
+
+### **Exploración de los datos**
+
+```{r}
+estaciones <- rbind(nh0046, nh0098, nh0437, nh0472, nh0910)
+```
+
+## 6.3.1
+
+### **Manipulación de datos**
+
+Filtrar los datos para la estación NH0437
+
+```{r}
+datos_filtrados <- estaciones %>% filter(id == "NH0437")
+```
+
+Graficar la temperatura de abrigo con una regresión lineal
+
+```{r}
+ggplot(datos_filtrados, aes(x = fecha, y = temperatura_abrigo_150cm)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue") +
+  labs(title = "Temperatura de Abrigo para la Estación NH0437",
+       x = "Fecha",
+       y = "Temperatura de Abrigo a 150 cm (°C)") +
+  theme_minimal()
+```
+
+Calcular el promedio mensual de la temperatura de abrigo
+
+```{r}
+datos_mensuales <- estaciones %>%
+  mutate(mes = lubridate::month(fecha)) %>%
+  group_by(id, mes) %>%
+  summarise(temperatura_media = mean(temperatura_abrigo_150cm, na.rm = TRUE))
+```
+
+Graficar el promedio mensual de la temperatura de abrigo para cada estación
+
+```{r}
+ggplot(datos_mensuales, aes(x = mes, y = temperatura_media, color = id)) +
+  geom_line() +
+  labs(title = "Promedio Mensual de la Temperatura de Abrigo por Estación",
+       x = "Mes",
+       y = "Temperatura Media (°C)",
+       color = "Estación") +
+  theme_minimal()
+```
+
+## **7.3.1**
+
+### **Trabajando con tablas**
+
+```{r}
+
+```
+
+## **8.5.1**
+
+### Funciones
+
+Funcion descarga y lectura estaciones
+
+```{r}
+descargar_estacion <- function(id_estacion, ruta) {
+  url_base <- url_base <- paste("https://raw.githubusercontent.com/rse-r/intro   -programacion/main/datos/", id_estacion, ".csv", sep = "")
+  
+  download.file(url_base, ruta)
+  
+  datos_estacion <- read.csv(ruta)
+  
+  return(datos_estacion)
+}
+
+```
+
+Función tabla_resumen_temperatura
+
+```{r}
+
+tabla_resumen_temperatura <- function(datos) {
+  resumen <- datos %>%
+    group_by(estacion) %>%
+    summarise(
+      min_temp = min(temperatura_abrigo_150cm, na.rm = TRUE),
+      max_temp = max(temperatura_abrigo_150cm, na.rm = TRUE),
+      mean_temp = mean(temperatura_abrigo_150cm, na.rm = TRUE)
+    )
+  return(resumen)
+}
+
+```
+
+Funcion grafico_temperatura_mensual
+
+```{r}
+
+grafico_temperatura_mensual <- function(datos, colores = NULL, titulo = "Temperatura") {
+  if (is.null(colores)) {
+    colores <- sample(colors(), length(unique(datos$mes)))
+  }
+  
+  grafico <- datos %>%
+    group_by(estacion, mes) %>%
+    summarise(mean_temp = mean(temperatura_abrigo_150cm, na.rm = TRUE)) %>%
+    ggplot(aes(x = mes, y = mean_temp, color = estacion)) +
+    geom_line() +
+    scale_color_manual(values = colores) +
+    labs(title = titulo, x = "Mes", y = "Temperatura Promedio")
+  
+  return(grafico)
+}
+
+```
